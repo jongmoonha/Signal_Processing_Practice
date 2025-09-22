@@ -94,19 +94,26 @@ def fast_kurtogram(x, fs, nlevel=7):
 
     c, _, _, _ = find_wav_kurt(x, h, g, h1, h2, h3, level_max, fi, 'kurt2', fs)
 
-    return Kwav, Level_w, freq_w, c, np.amax(Kwav[np.arange(Kwav.shape[0]), np.argmax(Kwav, axis=1)]), bandwidth, level_max
+    return Kwav, Level_w, freq_w, c, max_kurt, bandwidth, level_max
 
 def plot_kurtogram(Kwav, Level_w, freq_w, c, max_Kurt, bandwidth, level_max, fs):
-    minw = np.where(Level_w == level_max)[0][0]
-    kurtw = np.where(Kwav[minw, :] == max_Kurt)[0][0]
-    bandw = freq_w[kurtw]
+    lvl_max_idx = np.where(Level_w == level_max)[0][0]
+    Kwav_max_idx = np.where(Kwav[lvl_max_idx, :] == max_Kurt)[0][0]
+    center_freq = freq_w[Kwav_max_idx] + bandwidth/2
+    
+    b1 = center_freq - bandwidth/2
+    b2 = center_freq + bandwidth/2
+    if b2>fs/2:
+        b2 = fs/2-1
+    Wn = np.array([b1, b2])
+    
     plt.figure(figsize=(10, 6))
     ax = plt.gca()
     im = ax.imshow(Kwav, interpolation='none', aspect='auto')
     xlavel = np.array(np.arange(0, fs/2+fs/2/7, fs/2/7), dtype=int)
     plt.xticks(np.arange(0, Kwav.shape[1], Kwav.shape[1] // 7), labels=xlavel)
     plt.title(f'K max ={max_Kurt:.4f} at level {level_max:.1f} '
-            f'\nCenter frequency : {bandw + bandwidth/2:.1f}Hz Bandwidth ={bandwidth:.1f}Hz')
+            f'\nCenter frequency : {center_freq:.1f}Hz Bandwidth ={bandwidth:.1f}Hz')
     plt.xlabel('frequency (Hz)')
     plt.yticks(np.arange(0, Kwav.shape[0], 1), labels=np.round(Level_w, 1))
     plt.ylabel('level (window lenght)')
