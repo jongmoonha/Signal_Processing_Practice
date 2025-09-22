@@ -41,6 +41,8 @@ POSSIBILITY OF SUCH DAMAGE.
 from scipy.signal import firwin
 from scipy.signal import lfilter
 import numpy as np
+import matplotlib.pyplot as plt
+import mpl_toolkits.axes_grid1
 
 
 def fast_kurtogram(x, fs, nlevel=7):
@@ -94,7 +96,27 @@ def fast_kurtogram(x, fs, nlevel=7):
 
     return Kwav, Level_w, freq_w, c, np.amax(Kwav[np.arange(Kwav.shape[0]), np.argmax(Kwav, axis=1)]), bandwidth, level_max
 
-
+def plot_kurtogram(Kwav, Level_w, freq_w, c, max_Kurt, bandwidth, level_max, fs):
+    minw = np.where(Level_w == level_max)[0][0]
+    kurtw = np.where(Kwav[minw, :] == max_Kurt)[0][0]
+    bandw = freq_w[kurtw]
+    plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    im = ax.imshow(Kwav, interpolation='none', aspect='auto')
+    xlavel = np.array(np.arange(0, fs/2+fs/2/7, fs/2/7), dtype=int)
+    plt.xticks(np.arange(0, Kwav.shape[1], Kwav.shape[1] // 7), labels=xlavel)
+    plt.title(f'K max ={max_Kurt:.4f} at level {level_max:.1f} '
+            f'\nCenter frequency : {bandw + bandwidth/2:.1f}Hz Bandwidth ={bandwidth:.1f}Hz')
+    plt.xlabel('frequency (Hz)')
+    plt.yticks(np.arange(0, Kwav.shape[0], 1), labels=np.round(Level_w, 1))
+    plt.ylabel('level (window lenght)')
+    divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    plt.colorbar(im, cax=cax)
+    plt.ylabel('Spectral Kurtosis')
+    plt.tight_layout()
+    plt.show()
+    
 def _kurt(this_x, opt):
     eps = 2.2204e-16
 
